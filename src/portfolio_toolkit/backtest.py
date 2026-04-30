@@ -136,7 +136,8 @@ def backtest_weights(
         )
 
     equal_benchmark = baseline_weights(dataset_name, "equal_weight", repo_root=repo_root).weights
-    equal_benchmark = _align_weights_to_prices(equal_benchmark.loc[:, strategy_tickers], price_wide.index)
+    equal_benchmark = _align_weights_to_prices(equal_benchmark, price_wide.index)
+    equal_benchmark = equal_benchmark.loc[:, strategy_tickers]
     equal_benchmark = _mask_unavailable_weights(equal_benchmark, price_wide.loc[:, strategy_tickers])
     equal_benchmark_name = "equal_weight" if portfolio_weights.strategy_name != "equal_weight" else "equal_weight_benchmark"
     backtests.append(
