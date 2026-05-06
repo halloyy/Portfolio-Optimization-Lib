@@ -6,6 +6,7 @@ from typing import Callable
 
 import bt
 import pandas as pd
+import numpy as np
 
 from .baselines import baseline_weights
 from .config import dataset_identifier, resolve_dataset_spec
@@ -41,6 +42,8 @@ def _align_weights_to_prices(weights: pd.DataFrame, price_index: pd.DatetimeInde
     aligned = pd.DataFrame(aligned_rows, index=pd.DatetimeIndex(aligned_index))
     aligned.index.name = "date"
     aligned = aligned.groupby(level=0).last()
+    row_sums = aligned.sum(axis=1)
+    aligned = aligned.div(row_sums.replace(0, np.nan), axis=0)
     return validate_weights_frame(aligned)
 
 
@@ -137,7 +140,8 @@ def backtest_weights(
         )
 
     equal_benchmark = baseline_weights(spec, "equal_weight", repo_root=repo_root).weights
-    equal_benchmark = _align_weights_to_prices(equal_benchmark.loc[:, strategy_tickers], price_wide.index)
+    equal_benchmark = _align_weights_to_prices(equal_benchmark, price_wide.index)
+    equal_benchmark = equal_benchmark.loc[:, strategy_tickers]
     equal_benchmark = _mask_unavailable_weights(equal_benchmark, price_wide.loc[:, strategy_tickers])
     equal_benchmark_name = "equal_weight" if portfolio_weights.strategy_name != "equal_weight" else "equal_weight_benchmark"
     backtests.append(
